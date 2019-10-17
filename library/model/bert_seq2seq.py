@@ -288,8 +288,7 @@ class BertSeq2Seq(Model):
         # shape: (batch_size, decoder_output_dim)
         state["decoder_hidden"] = final_encoder_output
         # shape: (batch_size, decoder_output_dim)
-        # state["decoder_context"] = state["encoder_outputs"].new_zeros(batch_size, self._decoder_output_dim)
-        state["decoder_context"] = final_encoder_output
+        state["decoder_context"] = state["encoder_outputs"].new_zeros(batch_size, self._decoder_output_dim)
         return state
 
     def _forward_loop(self,
@@ -327,7 +326,12 @@ class BertSeq2Seq(Model):
         step_logits: List[torch.Tensor] = []
         step_predictions: List[torch.Tensor] = []
         for timestep in range(num_decoding_steps):
-            if not target_tokens:
+            if self.training and torch.rand(1).item() < self._scheduled_sampling_ratio:
+                # Use gold tokens at test time and at a rate of 1 - _scheduled_sampling_ratio
+                # during training.
+                # shape: (batch_size,)
+                input_choices = last_predictions
+            elif not target_tokens:
                 # shape: (batch_size,)
                 input_choices = last_predictions
             else:
