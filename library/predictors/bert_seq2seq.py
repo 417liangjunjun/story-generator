@@ -17,11 +17,8 @@ from allennlp.predictors.predictor import Predictor
 @Predictor.register('bert_seq2seq_predictor')
 class BertSeq2SeqPredictor(Predictor):
     """
-    Predictor for sequence to sequence models, including
-    :class:`~allennlp.models.encoder_decoder.simple_seq2seq` and
-    :class:`~allennlp.models.encoder_decoder.copynet_seq2seq`.
+    bert seq2seq的预测类
     """
-
     def predict(self, source: str) -> JsonDict:
         return self.predict_json({"source" : source})
 
