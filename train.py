@@ -10,7 +10,13 @@
 
 from allennlp.commands.train import train_model_from_file
 from allennlp.common.util import import_submodules
-
+import numpy
+import random
+import torch
+random.seed(12)
+numpy.random.seed(12)
+torch.manual_seed(12)
+torch.cuda.manual_seed_all(12)
 import_submodules('library')
 
 

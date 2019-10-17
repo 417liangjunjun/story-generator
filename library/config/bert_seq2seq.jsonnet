@@ -13,8 +13,8 @@
       }
     }
   },
-  "train_data_path": "/home/liangjunjun/story-generator/rocstory_plan_write/test.dev",
-  "validation_data_path": "/home/liangjunjun/story-generator/rocstory_plan_write/test.dev",
+  "train_data_path": "/home/liangjunjun/story-generator/data/line2story_train.txt",
+  "validation_data_path": "/home/liangjunjun/story-generator/data/dev.txt",
   "model": {
     "type": "bert_seq2seq",
     "vocab_file": "/home/liangjunjun/uncased_L-24_H-1024_A-16/vocab.txt",
@@ -45,20 +45,20 @@
         "source_tokens","num_tokens"
       ]
     ],
-    "batch_size": 9,
+    "batch_size": 12,
     "max_instances_in_memory": 600
   },
   "trainer": {
     "num_epochs": 20,
     "grad_norm": 5,
-    "patience": 10,
+    "patience": 5,
     "validation_metric": "+BLEU",
-    "cuda_device": -1,
+    "cuda_device": 1,
     "optimizer": {
       "type": "bert_adam",
-      "lr": 4e-5,
+      "lr": 4e-3,
       "warmup": 0.1,
-      "t_total": 40000
+      "t_total": 200000
     }
   }
 }
