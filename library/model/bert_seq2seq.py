@@ -18,8 +18,8 @@ from allennlp.nn import util
 from allennlp.nn.beam_search import BeamSearch
 from allennlp.training.metrics import BLEU
 from allennlp.nn import InitializerApplicator, RegularizerApplicator
-@Model.register("bert_seq2seq")
 
+@Model.register("bert_seq2seq")
 class BertSeq2Seq(Model):
     """
     This ``SimpleSeq2Seq`` class is a :class:`Model` which takes a sequence, encodes it, and then
@@ -84,11 +84,11 @@ class BertSeq2Seq(Model):
         super(BertSeq2Seq, self).__init__(vocab)
         self._target_namespace = target_namespace
         self._scheduled_sampling_ratio = scheduled_sampling_ratio
-        self.bert_vocab = self.build_vocab(vocab_file)
+        self.bert_vocab_token_to_index,self.bert_vocab_index_to_token = self.build_vocab(vocab_file)
         # We need the start symbol to provide as the input at the first timestep of decoding, and
         # end symbol as a way to indicate the end of the decoded sequence.
-        self._start_index = self.bert_vocab['[CLS]']
-        self._end_index = self.bert_vocab['[SEP]']
+        self._start_index = self.bert_vocab_token_to_index['[CLS]']
+        self._end_index = self.bert_vocab_token_to_index['[SEP]']
 
         if use_bleu:
             pad_index = 0  # pylint: disable=protected-access
@@ -104,7 +104,7 @@ class BertSeq2Seq(Model):
         # Dense embedding of source vocab tokens.
         self._source_embedder = source_embedder
 
-        num_classes = len(self.bert_vocab)
+        num_classes = len(self.bert_vocab_token_to_index)
 
         # Attention mechanism applied to the encoder output for each step.
         if attention:
@@ -146,12 +146,13 @@ class BertSeq2Seq(Model):
         initializer(self)
 
     def build_vocab(self,vocab_file):
-        vocab = {}
+        vocab_token_to_index,vocab_index_to_token = {},{}
         with open(vocab_file) as f:
             vocabulary = f.readlines()
         for index,voc in enumerate(vocabulary):
-            vocab[voc.strip()] = index
-        return vocab
+            vocab_token_to_index[voc.strip()] = index
+            vocab_index_to_token[index] = voc.strip()
+        return vocab_token_to_index,vocab_index_to_token
 
     def take_step(self,
                   last_predictions: torch.Tensor,
@@ -255,15 +256,14 @@ class BertSeq2Seq(Model):
             predicted_indices = predicted_indices.detach().cpu().numpy()
         all_predicted_tokens = []
         for indices in predicted_indices:
-            # Beam search gives us the top k results for each source sentence in the batch
-            # but we just want the single best.
-            if len(indices.shape) > 1:
-                indices = indices[0]
-            indices = list(indices)
-            # Collect indices till the first end_symbol
-            if self._end_index in indices:
-                indices = indices[:indices.index(self._end_index)]
-            predicted_tokens = [self.bert_vocab[x] for x in indices]
+            predicted_tokens = []
+            for indice in indices:
+                indice = list(indice)
+                # Collect indices till the first end_symbol
+                if self._end_index in indice:
+                    indice = indice[:indice.index(self._end_index)]
+                predicted_token = [self.bert_vocab_index_to_token[x] for x in indice]
+                predicted_tokens.append(predicted_token)
             all_predicted_tokens.append(predicted_tokens)
         output_dict["predicted_tokens"] = all_predicted_tokens
         return output_dict
