@@ -14,7 +14,6 @@ from overrides import overrides
 
 from allennlp.common.checks import ConfigurationError
 from allennlp.common.file_utils import cached_path
-from allennlp.common.util import START_SYMBOL, END_SYMBOL
 from allennlp.data.dataset_readers.dataset_reader import DatasetReader
 from allennlp.data.fields import TextField
 from allennlp.data.instance import Instance
@@ -78,10 +77,11 @@ class BertSeq2SeqDatasetReader(DatasetReader):
                 line = line.strip("\n")
                 line = line.strip("<EOL>")
                 line = line.strip("<EOT>")
+                line = line.replace('</s> ','')
                 if not line:
                     continue
                 if '<EOL>' in line and len(line.split('<EOL>')) == 2:
-                    line = line.replace('<EOT>','[SEP]')
+                    line = line.replace('<EOT>','★')
                     line_parts = line.split('<EOL>')
                 else:
                     line_parts = line.split('<EOT>')
@@ -94,14 +94,9 @@ class BertSeq2SeqDatasetReader(DatasetReader):
     def text_to_instance(self, source_string: str, target_string: str = None) -> Instance:  # type: ignore
         # pylint: disable=arguments-differ
         tokenized_source = self._source_tokenizer.tokenize(source_string)
-        if self._source_add_start_token:
-            tokenized_source.insert(0, Token(START_SYMBOL))
-        tokenized_source.append(Token(END_SYMBOL))
         source_field = TextField(tokenized_source, self._source_token_indexers)
         if target_string is not None:
             tokenized_target = self._target_tokenizer.tokenize(target_string)
-            tokenized_target.insert(0, Token(START_SYMBOL))
-            tokenized_target.append(Token(END_SYMBOL))
             target_field = TextField(tokenized_target, self._target_token_indexers)
             return Instance({"source_tokens": source_field, "target_tokens": target_field})
         else:

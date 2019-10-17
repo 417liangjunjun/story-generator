@@ -10,7 +10,6 @@
 
 from allennlp.commands.train import train_model_from_file
 from allennlp.common.util import import_submodules
-
 import_submodules('library')
 
 

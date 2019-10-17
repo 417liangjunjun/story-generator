@@ -17,10 +17,9 @@ from allennlp.modules.token_embedders import Embedding
 from allennlp.nn import util
 from allennlp.nn.beam_search import BeamSearch
 from allennlp.training.metrics import BLEU
-from allennlp.common.util import START_SYMBOL, END_SYMBOL
-
-
+from allennlp.nn import InitializerApplicator, RegularizerApplicator
 @Model.register("bert_seq2seq")
+
 class BertSeq2Seq(Model):
     """
     This ``SimpleSeq2Seq`` class is a :class:`Model` which takes a sequence, encodes it, and then
@@ -80,18 +79,19 @@ class BertSeq2Seq(Model):
                  target_namespace: str = "tokens",
                  target_embedding_dim: int = None,
                  scheduled_sampling_ratio: float = 0.,
-                 use_bleu: bool = True) -> None:
+                 use_bleu: bool = True,
+                 initializer: InitializerApplicator = InitializerApplicator(),) -> None:
         super(BertSeq2Seq, self).__init__(vocab)
         self._target_namespace = target_namespace
         self._scheduled_sampling_ratio = scheduled_sampling_ratio
         self.bert_vocab = self.build_vocab(vocab_file)
         # We need the start symbol to provide as the input at the first timestep of decoding, and
         # end symbol as a way to indicate the end of the decoded sequence.
-        self._start_index = self.bert_vocab[START_SYMBOL]
-        self._end_index = self.bert_vocab[END_SYMBOL]
+        self._start_index = self.bert_vocab['[CLS]']
+        self._end_index = self.bert_vocab['[SEP]']
 
         if use_bleu:
-            pad_index = self.bert_vocab["@@PADDING@@"]  # pylint: disable=protected-access
+            pad_index = 0  # pylint: disable=protected-access
             self._bleu = BLEU(exclude_indices={pad_index, self._end_index, self._start_index})
         else:
             self._bleu = None
@@ -143,18 +143,14 @@ class BertSeq2Seq(Model):
         # We project the hidden state from the decoder into the output vocabulary space
         # in order to get log probabilities of each target token, at each time step.
         self._output_projection_layer = Linear(self._decoder_output_dim, num_classes)
-        print('!!!!!!!!', num_classes)
+        initializer(self)
 
     def build_vocab(self,vocab_file):
         vocab = {}
         with open(vocab_file) as f:
             vocabulary = f.readlines()
         for index,voc in enumerate(vocabulary):
-            vocab[index] = voc
-        num_class = len(vocab)
-        vocab[START_SYMBOL] = num_class
-        vocab[END_SYMBOL] = num_class + 1
-        vocab["@@PADDING@@"] = num_class + 2
+            vocab[voc.strip()] = index
         return vocab
 
     def take_step(self,
@@ -293,7 +289,6 @@ class BertSeq2Seq(Model):
         state["decoder_hidden"] = final_encoder_output
         # shape: (batch_size, decoder_output_dim)
         state["decoder_context"] = state["encoder_outputs"].new_zeros(batch_size, self._decoder_output_dim)
-
         return state
 
     def _forward_loop(self,
