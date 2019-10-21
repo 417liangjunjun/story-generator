@@ -22,10 +22,10 @@ class StoryGenerator(object):
     def generate(self, source):
         target = self.predictor.predict_json({'source': source})
         target = target["predicted_tokens"]
-        story = []
-        for _target in target:
-            _story = ' '.join(_target)
-            story.append(_story)
+        story = ' '.join(target)
+        # for _target in target:
+        #     _story = ' '.join(_target)
+        #     story.append(_story)
         return story
 
     def processor_txt(self, file_path, output_path):
@@ -47,9 +47,7 @@ class StoryGenerator(object):
                     line_parts = line.split('<EOT>')
                 story = self.generate(line_parts[0])
                 print("主题是:", line_parts[0])
-                print("生成故事是:")
-                for _story in story:
-                    print(_story)
+                print("生成故事是:",story)
                 print("参考故事是:",line_parts[1])
                 print('\n')
                 # fout.write(story)
@@ -58,6 +56,6 @@ class StoryGenerator(object):
 
 if __name__ == "__main__":
     generator = StoryGenerator(
-        model_path='/home/liangjunjun/story-generator/model/line2story_batch12',
+        model_path='/home/liangjunjun/story-generator/model/line2story',
         cuda_device=2)
-    generator.processor_txt('/home/liangjunjun/story-generator/data/test.txt','/home/liangjunjun/story-generator/data/story_1.txt')
+    generator.processor_txt('/home/liangjunjun/story-generator/data/final_train.txt','/home/liangjunjun/story-generator/data/story_1.txt')
