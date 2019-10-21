@@ -79,7 +79,7 @@ class BertSeq2Seq(Model):
                  target_namespace: str = "tokens",
                  target_embedding_dim: int = None,
                  scheduled_sampling_ratio: float = 0.,
-                 use_bleu: bool = True,
+                 use_bleu: bool = False,
                  initializer: InitializerApplicator = InitializerApplicator(),) -> None:
         super(BertSeq2Seq, self).__init__(vocab)
         self._target_namespace = target_namespace
@@ -139,7 +139,7 @@ class BertSeq2Seq(Model):
         # for the decoder at each time step.
         # TODO (pradeep): Do not hardcode decoder cell type.
         self._decoder_cell = LSTMCell(self._decoder_input_dim, self._decoder_output_dim)
-
+        self._input_projection_layer = Linear(self._encoder_output_dim, self._encoder_output_dim)
         # We project the hidden state from the decoder into the output vocabulary space
         # in order to get log probabilities of each target token, at each time step.
         self._output_projection_layer = Linear(self._decoder_output_dim, num_classes)
@@ -273,6 +273,7 @@ class BertSeq2Seq(Model):
         # use bert to encode input
         del source_tokens['mask']
         embedded_input = self._source_embedder(source_tokens)
+        embedded_input = self._input_projection_layer(embedded_input)
         # shape: (batch_size, max_input_sequence_length)
         source_mask = util.get_text_field_mask(source_tokens)
         return {

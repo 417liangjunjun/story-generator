@@ -13,8 +13,8 @@ from allennlp.common.util import import_submodules
 import_submodules('library')
 
 
-CONFIG_PATH = '/home/liangjunjun/story-generator/library/config/bert_seq2seq.jsonnet'
-SERIALIZATION_DIR = '/home/liangjunjun/story-generator/model'
+CONFIG_PATH = '/home/liangjunjun/story-generator/library/config/baseline.jsonnet'
+SERIALIZATION_DIR = '/home/liangjunjun/story-generator/model/test'
 
 train_model_from_file(parameter_filename=CONFIG_PATH,
                       serialization_dir=SERIALIZATION_DIR,
